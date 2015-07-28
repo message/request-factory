@@ -3,7 +3,7 @@
 Will use jquery param for building 
 ```javascript
 // POST /users
-fetchival('/users').post({
+requestFactory('/users').post({
   name: 'Typicode',
   login: 'typicode'
 })
