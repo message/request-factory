@@ -1,89 +1,79 @@
-;(function (window) {
+"use strict";
 
-  function defaults (target, obj) {
-    for (var prop in obj) target[prop] = target[prop] || obj[prop]
-  }
+var promise = require("es6-promise");
+var param = require("jquery-param");
+var fetch = require("whatwg-fetch");
 
-  function getQuery (queryParams) {
-    var arr = Object.keys(queryParams).map(function (k) {
-      return [k, encodeURIComponent(queryParams[k])].join('=')
-    })
-    return '?' + arr.join('&')
-  }
+promise.polyfill(); // Run promises polyfill
 
-  function _fetch (method, url, opts, data, queryParams) {
-    opts.method = method
-    opts.headers = opts.headers || {}
-    opts.responseAs = (opts.responseAs && ['json', 'text'].indexOf(opts.responseAs) >= 0) ? opts.responseAs : 'json'
+function requestFactory(url, opts) {
+	opts = opts || {};
 
-    defaults(opts.headers, {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    })
+	var _ = function(u, o) {
+		// Extend parameters with previous ones
+		u = url + '/' + u;
+		o = o || {};
+		defaults(o, opts);
+		return requestFactory(u, o)
+	};
 
-    if (queryParams) {
-      url += getQuery(queryParams)
-    }
+	_.get = function(queryParams) {
+		return _fetch('GET', url, opts, null, queryParams)
+	};
 
-    if (data) {
-      opts.body = JSON.stringify(data)
-    }
+	_.post = function(data) {
+		return _fetch('POST', url, opts, data)
+	};
 
-    return fetchival.fetch(url, opts)
-      .then(function (response) {
-        if (response.status >= 200 && response.status < 300) {
-          return response[opts.responseAs]()
-        }
-        var err = new Error(response.statusText)
-        err.response = response
-        throw err
-      })
-  }
+	_.put = function(data) {
+		return _fetch('PUT', url, opts, data)
+	};
 
-  function fetchival (url, opts) {
-    opts = opts || {}
+	_.patch = function(data) {
+		return _fetch('PATCH', url, opts, data)
+	};
 
-    var _ = function (u, o) {
-      // Extend parameters with previous ones
-      u = url + '/' + u
-      o = o || {}
-      defaults(o, opts)
-      return fetchival(u, o)
-    }
+	_.delete = function() {
+		return _fetch('DELETE', url, opts)
+	};
 
-    _.get = function (queryParams) {
-      return _fetch('GET', url, opts, null, queryParams)
-    }
+	return _;
+}
 
-    _.post = function (data) {
-      return _fetch('POST', url, opts, data)
-    }
+// Binding fetch agent
+requestFactory.fetch = fetch;
 
-    _.put = function (data) {
-      return _fetch('PUT', url, opts, data)
-    }
+function defaults(target, obj) {
+	for (var prop in obj) target[prop] = target[prop] || obj[prop]
+}
 
-    _.patch = function (data) {
-      return _fetch('PATCH', url, opts, data)
-    }
+function getQuery(queryParams) {
+	var arr = Object.keys(queryParams).map(function(k) {
+		return [k, encodeURIComponent(queryParams[k])].join('=')
+	});
+	return '?' + arr.join('&')
+}
 
-    _.delete = function () {
-      return _fetch('DELETE', url, opts)
-    }
+function _fetch(method, url, opts, data, queryParams) {
+	opts.method = method;
+	opts.credentials = 'same-origin'; // https://github.com/github/fetch#sending-cookies
+	opts.headers = opts.headers || {};
+	opts.responseAs = (opts.responseAs && ['json', 'text'].indexOf(opts.responseAs) >= 0) ? opts.responseAs : 'json';
 
-    return _
-  }
+	defaults(opts.headers, {
+		'Accept': 'application/json',
+		'Content-Type': 'application/x-www-form-urlencoded'
+	});
 
-  // Expose fetch so that other polyfills can be used
-  // Bind fetch to window to avoid TypeError: Illegal invocation
-  fetchival.fetch = typeof fetch !== 'undefined' ? fetch.bind(window) : null
+	if (queryParams) {
+		url += getQuery(queryParams)
+	}
 
-  // Support CommonJS, AMD & browser
-  if (typeof exports === 'object')
-    module.exports = fetchival
-  else if (typeof define === 'function' && define.amd)
-    define(function() { return fetchival })
-  else
-    window.fetchival = fetchival
+	if (data) {
+		opts.body = param(data);
+	}
 
-})(typeof window != 'undefined' ? window : undefined);
+	return requestFactory.fetch(url, opts);
+}
+
+module.exports = requestFactory;

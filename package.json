@@ -1,36 +1,38 @@
 {
-  "name": "fetchival",
-  "version": "0.3.1",
-  "description": "Makes JSON requests with fetch easier",
+  "name": "request-factory",
+  "version": "0.1.0",
+  "description": "Makes requests easier",
   "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "mocha test/tests.js",
-    "uglify": "uglifyjs -m -r fetchival index.js > index.min.js",
-    "size": "uglifyjs  -m -r fetchival index.js | gzip -9f | wc -c"
-  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/typicode/fetchival.git"
+    "url": "https://github.com/message/request-factory.git"
   },
   "keywords": [
     "fetch",
     "API",
     "JSON",
-    "REST"
+    "REST",
+    "http",
+    "ajax"
   ],
-  "author": "Typicode <typicode@gmail.com>",
+  "author": {
+    "name": "Dmitry Polovka",
+    "url": "https://github.com/message"
+  },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/typicode/fetchival/issues"
+    "url": "https://github.com/message/request-factory/issues"
   },
-  "homepage": "https://github.com/typicode/fetchival",
+  "homepage": "https://github.com/message/request-factory",
   "devDependencies": {
     "chai": "^2.2.0",
     "mocha": "^2.2.4",
     "node-fetch": "^1.1.1",
     "uglify-js": "^2.4.20"
+  },
+  "dependencies": {
+    "es6-promise": "2.3.0",
+    "jquery-param": "0.1.2",
+    "whatwg-fetch": "0.9.0"
   }
 }
