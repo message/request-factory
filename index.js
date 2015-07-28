@@ -3,7 +3,7 @@
 var _ = require("lodash");
 var promise = require("es6-promise");
 var param = require("jquery-param");
-var fetchPolyfill = require("whatwg-fetch");
+require("whatwg-fetch");
 
 promise.polyfill(); // Run promises polyfill
 
@@ -39,8 +39,10 @@ function _fetch(method, url, opts, data) {
 		credentials: "same-origin" // https://github.com/github/fetch#sending-cookies
 	});
 
+	var jsonType = "application/json";
+
 	opts.headers = _.extend({}, opts.headers, {
-		Accept: "application/json"
+		Accept: jsonType
 	});
 
 	if (data) {
@@ -49,6 +51,20 @@ function _fetch(method, url, opts, data) {
 	}
 
 	return requestFactory.fetch(url, opts).then(function(response) {
+		// Convert to JSON when content type is "application/json"
+		var contentType = response.headers.get("Content-Type");
+		if (contentType == jsonType) {
+			response.content = response.json();
+		} else {
+			response.content = response.text();
+		}
+
+		if (response.status >= 200 && response.status < 300) {
+			var err = new Error(response.statusText);
+			err.response = response;
+			throw err;
+		}
+
 		return response;
 	});
 }
