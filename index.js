@@ -50,22 +50,29 @@ function _fetch(method, url, opts, data) {
 		opts.body = param(data);
 	}
 
+	var originalResponse;
 	return requestFactory.fetch(url, opts).then(function(response) {
+		originalResponse = response;
+		return response.text();
+	}).then(function(responseData) {
 		// Convert to JSON when content type is "application/json"
-		var contentType = response.headers.get("Content-Type");
-		if (contentType == jsonType) {
-			response.content = response.json();
-		} else {
-			response.content = response.text();
+		var contentType = originalResponse.headers.get("Content-Type");
+		if (contentType.indexOf(jsonType) != -1) {
+			try {
+				responseData = JSON.parse(responseData);
+			} catch (e) {
+				responseData = null;
+			}
 		}
+		originalResponse.content = responseData;
 
-		if (response.status >= 200 && response.status < 300) {
-			var err = new Error(response.statusText);
-			err.response = response;
+		if (originalResponse.status >= 400) {
+			var err = new Error(originalResponse.statusText);
+			err.response = originalResponse;
 			throw err;
 		}
 
-		return response;
+		return originalResponse;
 	});
 }
 
