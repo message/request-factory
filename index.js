@@ -3,6 +3,7 @@
 var _ = require("lodash");
 var promise = require("es6-promise");
 var param = require("jquery-param");
+var RequestChainSolver = require("./lib/RequestChainSolver");
 require("whatwg-fetch");
 
 promise.polyfill(); // Run promises polyfill
@@ -24,7 +25,7 @@ var requestFactory = {
 		return _fetch("PATCH", url, opts, data)
 	},
 
-	"delete": function() {
+	"delete": function(url, opts) {
 		return _fetch("DELETE", url, opts)
 	}
 };
@@ -32,11 +33,12 @@ var requestFactory = {
 requestFactory.fetch = typeof fetch !== "undefined" ? fetch.bind(window) : null;
 
 function _fetch(method, url, opts, data) {
-	var defaults = {};
+	var defaults = {
+		credentials: "same-origin" // https://github.com/github/fetch#sending-cookies
+	};
 
 	var opts = _.extend(defaults, opts, {
-		method: method,
-		credentials: "same-origin" // https://github.com/github/fetch#sending-cookies
+		method: method
 	});
 
 	var jsonType = "application/json";
@@ -50,29 +52,34 @@ function _fetch(method, url, opts, data) {
 		opts.body = param(data);
 	}
 
-	var originalResponse;
-	return requestFactory.fetch(url, opts).then(function(response) {
-		originalResponse = response;
-		return response.text();
-	}).then(function(responseData) {
-		// Convert to JSON when content type is "application/json"
-		var contentType = originalResponse.headers.get("Content-Type");
-		if (contentType.indexOf(jsonType) != -1) {
-			try {
-				responseData = JSON.parse(responseData);
-			} catch (e) {
-				responseData = null;
-			}
-		}
-		originalResponse.content = responseData;
+	return new RequestChainSolver(function() {
+		var originalResponse;
 
-		if (originalResponse.status >= 400) {
-			var err = new Error(originalResponse.statusText);
-			err.response = originalResponse;
-			throw err;
-		}
+		requestFactory.fetch(url, opts)
+			.then(function(response) {
+				originalResponse = response;
+				return response.text();
+			})
+			.then(function(responseData) {
+				if (originalResponse.headers.has("Content-Type")) {
+					var contentType = originalResponse.headers.get("Content-Type") || "";
+					// Convert to JSON when content type is "application/json"
+					if (contentType.indexOf(jsonType) != -1) {
+						try {
+							responseData = JSON.parse(responseData);
+						} catch (e) {
+							responseData = null;
+						}
+					}
+				}
 
-		return originalResponse;
+				originalResponse.content = responseData;
+
+				this.dispatch(originalResponse);
+			}.bind(this))
+			.catch(function() {
+				this.dispatchFatal();
+			}.bind(this))
 	});
 }
 
