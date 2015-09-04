@@ -4,6 +4,7 @@ var _ = require("lodash");
 var promise = require("es6-promise");
 var param = require("jquery-param");
 var RequestChainSolver = require("./lib/RequestChainSolver");
+
 require("whatwg-fetch");
 
 promise.polyfill(); // Run promises polyfill
