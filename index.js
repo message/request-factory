@@ -53,10 +53,12 @@ function _fetch(method, url, opts, data) {
 		opts.body = param(data);
 	}
 
-	var debounce = null;
-	if (opts.debounce && _.isNumber(opts.debounce) && !_.isNaN(opts.debounce)) {
+	var debounce = 5; // 5ms debounce by default
+	if (opts.debounce === null  || (opts.debounce && _.isNumber(opts.debounce) && !_.isNaN(opts.debounce))) {
 		debounce = opts.debounce;
 	}
+
+	delete opts.debounce;
 
 	return new RequestChainSolver(function() {
 		var originalResponse;
