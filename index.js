@@ -53,6 +53,11 @@ function _fetch(method, url, opts, data) {
 		opts.body = param(data);
 	}
 
+	var debounce = null;
+	if (opts.debounce && _.isNumber(opts.debounce) && !_.isNaN(opts.debounce)) {
+		debounce = opts.debounce;
+	}
+
 	return new RequestChainSolver(function() {
 		var originalResponse;
 
@@ -81,7 +86,7 @@ function _fetch(method, url, opts, data) {
 			.catch(function() {
 				this.dispatchFatal();
 			}.bind(this))
-	});
+	}, debounce);
 }
 
 module.exports = requestFactory;
