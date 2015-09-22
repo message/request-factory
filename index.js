@@ -54,7 +54,7 @@ function _fetch(method, url, opts, data) {
 	}
 
 	var debounce = 5; // 5ms debounce by default
-	if (opts.debounce === null  || (opts.debounce && _.isNumber(opts.debounce) && !_.isNaN(opts.debounce))) {
+	if (opts.debounce === null || (opts.debounce && _.isNumber(opts.debounce) && !_.isNaN(opts.debounce))) {
 		debounce = opts.debounce;
 	}
 
@@ -64,6 +64,9 @@ function _fetch(method, url, opts, data) {
 		var originalResponse;
 
 		requestFactory.fetch(url, opts)
+			.catch(function() {
+				this.dispatchFatal();
+			}.bind(this))
 			.then(function(response) {
 				originalResponse = response;
 				return response.text();
@@ -84,9 +87,6 @@ function _fetch(method, url, opts, data) {
 				originalResponse.content = responseData;
 
 				this.dispatch(originalResponse);
-			}.bind(this))
-			.catch(function() {
-				this.dispatchFatal();
 			}.bind(this))
 	}, debounce);
 }
