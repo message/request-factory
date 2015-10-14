@@ -10,6 +10,7 @@ require("whatwg-fetch");
 promise.polyfill(); // Run promises polyfill
 
 var requestFactory = {
+	DEBOUNCE_TIME: 5,
 	"get": function(url, opts) {
 		return _fetch("GET", url, opts)
 	},
@@ -38,55 +39,56 @@ function _fetch(method, url, opts, data) {
 		credentials: "same-origin" // https://github.com/github/fetch#sending-cookies
 	};
 
-	var opts = _.extend(defaults, opts, {
+	var options = _.extend(defaults, opts, {
 		method: method
 	});
 
 	var jsonType = "application/json";
 
-	opts.headers = _.extend({}, opts.headers, {
+	options.headers = _.extend({}, options.headers, {
 		Accept: jsonType
 	});
 
 	if (data) {
-		opts.headers["Content-Type"] = "application/x-www-form-urlencoded";
-		opts.body = param(data);
+		options.headers["Content-Type"] = "application/x-www-form-urlencoded";
+		options.body = param(data);
 	}
 
-	var debounce = 5; // 5ms debounce by default
-	if (opts.debounce === null || (opts.debounce && _.isNumber(opts.debounce) && !_.isNaN(opts.debounce))) {
-		debounce = opts.debounce;
+	var debounce = requestFactory.DEBOUNCE_TIME; // 5ms debounce by default
+	if (options.debounce === null || (options.debounce && _.isNumber(options.debounce) && !_.isNaN(options.debounce))) {
+		debounce = options.debounce;
 	}
 
-	delete opts.debounce;
+	delete options.debounce;
 
 	return new RequestChainSolver(function() {
 		var originalResponse;
 
-		requestFactory.fetch(url, opts)
-			.catch(function() {
-				this.dispatchFatal();
-			}.bind(this))
+		requestFactory.fetch(url, options)
 			.then(function(response) {
+				if (typeof(response) === "undefined") {
+					throw new Error("Something went wrong");
+				}
 				originalResponse = response;
 				return response.text();
 			})
 			.then(function(responseData) {
-				if (originalResponse.headers.has("Content-Type")) {
-					var contentType = originalResponse.headers.get("Content-Type") || "";
-					// Convert to JSON when content type is "application/json"
-					if (contentType.indexOf(jsonType) != -1) {
-						try {
-							responseData = JSON.parse(responseData);
-						} catch (e) {
-							responseData = null;
-						}
+				var contentType = originalResponse.headers.get("Content-Type") || "";
+				// Convert to JSON when content type is "application/json"
+				if (contentType.indexOf(jsonType) != -1) {
+					try {
+						responseData = JSON.parse(responseData);
+					} catch (e) {
+						responseData = null;
 					}
 				}
 
 				originalResponse.content = responseData;
 
 				this.dispatch(originalResponse);
+			}.bind(this))
+			.catch(function() {
+				this.dispatchFatal();
 			}.bind(this))
 	}, debounce);
 }
