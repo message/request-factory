@@ -85,7 +85,17 @@ function _fetch(method, url, opts, data) {
 
 				originalResponse.content = responseData;
 
-				this.dispatch(originalResponse);
+				try {
+					this.dispatch(originalResponse);
+				} catch (e) {
+					if (typeof console === 'object') {
+						if (console.error) {
+							console.error("Exception is thrown while running request callbacks. Dispatching fatal request callbacks.", e);
+						}
+					}
+
+					throw e;
+				}
 			}.bind(this))
 			.catch(function() {
 				this.dispatchFatal();
