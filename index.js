@@ -27,8 +27,8 @@ var requestFactory = {
 		return _fetch("PATCH", url, opts, data)
 	},
 
-	"delete": function(url, opts) {
-		return _fetch("DELETE", url, opts)
+	"delete": function(url, data, opts) {
+		return _fetch("DELETE", url, opts, data)
 	}
 };
 
