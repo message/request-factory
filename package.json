@@ -1,6 +1,6 @@
 {
   "name": "request-factory",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Makes requests easier",
   "main": "index.js",
   "repository": {
@@ -25,9 +25,9 @@
   },
   "homepage": "https://github.com/message/request-factory",
   "dependencies": {
-    "es6-promise": "3.0.2",
+    "es6-promise": "4.0.5",
     "jquery-param": "0.2.0",
-    "lodash": "3.10.1",
-    "whatwg-fetch": "0.10.0"
+    "lodash": "4.16.3",
+    "whatwg-fetch": "1.0.0"
   }
 }
