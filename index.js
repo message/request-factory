@@ -52,6 +52,13 @@ function _fetch(method, url, opts, data) {
 	if (data) {
 		options.headers["Content-Type"] = "application/x-www-form-urlencoded";
 		options.body = param(data);
+
+		if (opts && _.has(opts, "headers") && _.has(opts.headers, "Content-Type")) {
+			options.headers["Content-Type"] = opts.headers["Content-Type"];
+			if (opts.headers["Content-Type"] === "application/json") {
+				options.body = JSON.stringify(data);
+			}
+		}
 	}
 
 	var debounce = requestFactory.DEBOUNCE_TIME; // 5ms debounce by default

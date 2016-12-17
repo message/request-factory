@@ -1,6 +1,6 @@
 {
   "name": "request-factory",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Makes requests easier",
   "main": "index.js",
   "repository": {
